@@ -24,16 +24,16 @@
           \, #(update-in % [:t (:dp %)] (byte (.read System/in)))})
 
 ;; Given a program state generate the next state. May produce side effects.
-(defn step [state]
-  (update-in (if-let [new-state ((ops (get (:c state) (:ip state)) identity) state)]
+(defn step [{c :c ip :ip :as state}]
+  (update-in (if-let [new-state ((ops (get c ip) identity) state)]
                new-state state)
              [:ip] inc))
 
 ;; Lazily generate a sequence of states from source code.
 ;; Fetching a state may produce side effects.
 (defn state-seq [source-code]
-  ((fn generate [state]
-     (when (< (:ip state) (count (:c state)))
+  ((fn generate [{c :c ip :ip :as state}]
+     (when (< ip (count c))
        (cons state (lazy-seq (generate (step state))))))
    {:c (apply str (filter ops source-code)) :t {} :ip 0 :dp 0}))
 
